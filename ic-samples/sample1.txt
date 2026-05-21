@@ -1,0 +1,1 @@
+select (false||true)?A.sid:firstname as ABC from students A, grades B where 4<2, sin(pi());

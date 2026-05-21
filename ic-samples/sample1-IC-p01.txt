@@ -1,0 +1,5 @@
+00000 lrt       4 type:[none]  ; LRT_SETWORDBASE
+00001 lrt       5 type:[none] 0 ; LRT_CREATERESULTSET
+00002 lrt       6 type:[none] 0 ; LRT_FINALIZERESULTSET
+00003 pop       1 type:[none] 
+00004 lrt      11 type:[none]  ; LRT_POSTEXECUTECLEANUP

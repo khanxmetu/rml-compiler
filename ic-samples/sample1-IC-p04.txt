@@ -1,0 +1,20 @@
+00000 lrt       4 type:[none]  ; LRT_SETWORDBASE
+00001 lrt       5 type:[none] 0 ; LRT_CREATERESULTSET
+00002 const     0 type:[boolean] 0
+00003 call      0 type:[number] "pi" @9
+00004 call      1 type:[number] "sin" @6
+00005 pop       1 type:[none] 
+00006 jf       17 type:[none] 
+00007 lrt       0 type:[none] 1 ; LRT_RESETSCANNER
+00008 jf       17 type:[none] 
+00009 lrt       0 type:[none] 2 ; LRT_RESETSCANNER
+00010 jf       17 type:[none] 
+00011 symref    0 type:[none] 
+00012 lrt       3 type:[none] 0 ; LRT_SNAPSHOT
+00013 lrt       1 type:[none] 2 ; LRT_ADVANCESCANNER
+00014 jt       11 type:[none] 
+00015 lrt       1 type:[none] 1 ; LRT_ADVANCESCANNER
+00016 jt        9 type:[none] 
+00017 lrt       6 type:[none] 0 ; LRT_FINALIZERESULTSET
+00018 pop       1 type:[none] 
+00019 lrt      11 type:[none]  ; LRT_POSTEXECUTECLEANUP

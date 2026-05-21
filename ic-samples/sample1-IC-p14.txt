@@ -1,0 +1,16 @@
+00000 lrt       4 type:[none]  ; LRT_SETWORDBASE
+00001 lrt       5 type:[none] 0 ; LRT_CREATERESULTSET
+00002 jmp      13 type:[none] 
+00003 lrt       0 type:[none] 1 ; LRT_RESETSCANNER
+00004 jf       13 type:[none] 
+00005 lrt       0 type:[none] 2 ; LRT_RESETSCANNER
+00006 jf       13 type:[none] 
+00007 symref    0 type:[none] 
+00008 lrt       3 type:[none] 0 ; LRT_SNAPSHOT
+00009 lrt       1 type:[none] 2 ; LRT_ADVANCESCANNER
+00010 jt        7 type:[none] 
+00011 lrt       1 type:[none] 1 ; LRT_ADVANCESCANNER
+00012 jt        5 type:[none] 
+00013 lrt       6 type:[none] 0 ; LRT_FINALIZERESULTSET
+00014 pop       1 type:[none] 
+00015 lrt      11 type:[none]  ; LRT_POSTEXECUTECLEANUP
