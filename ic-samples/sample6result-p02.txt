@@ -1,0 +1,2 @@
+﻿cid,coursename
+C06,Arts

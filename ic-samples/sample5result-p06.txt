@@ -1,0 +1,2 @@
+﻿cid,coursename,meangrade
+C07,Biology,84.333300

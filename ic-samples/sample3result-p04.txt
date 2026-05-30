@@ -1,0 +1,2 @@
+﻿cid,meangrade
+C07,84.333300

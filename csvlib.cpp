@@ -47,6 +47,9 @@ void CSVProxy::receiveColumns()
 {
    if (dataPosition==-1)
    {
+      if (descLine!=nullptr)
+         delete descLine;
+
       descLine=fetchLine(false);
 
       if (descLine!=nullptr)
@@ -283,8 +286,8 @@ CSVLine *CSVProxy::fetchLine(bool verifyColumns)
    if (error)
    {
       ioError=true;
-      line=0;
       delete line;
+      line=nullptr;
    }
 
    delete columnStr;
@@ -341,6 +344,9 @@ string *CSVProxy::columnName(int ndx)
 
 CSVProxy::~CSVProxy()
 {
+   if (descLine!=nullptr)
+      delete descLine;
+
    if (fileName!=nullptr)
       delete fileName;
 

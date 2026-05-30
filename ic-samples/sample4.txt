@@ -1,0 +1,3 @@
+select min(number(meangrades.meangrade)) as minmeangrade from 
+   (select C.cid as cid, (select mean(number(G1.grade)) as grade from grades G1 where G1.cid==C.cid) as meangrade from courses C where (select count() as cnt from grades G2 where G2.cid==C.cid)>0) meangrades
+   where true;

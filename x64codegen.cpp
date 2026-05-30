@@ -1,4 +1,3 @@
-
 using namespace std;
 
 #include <iostream>
@@ -48,19 +47,18 @@ void X64CodeBag::emitBytes(int len, ...)
    va_end(list);
 }
 
-void *X64CodeBag::createCodeBase()
+RMLDynamicFuncDesc *X64CodeBag::createCodeBase()
 {
    int      pageSize=getpagesize();
    size_t   pageCount=(codeLen+pageSize-1)/pageSize,
             allocSize=pageSize*pageCount;
-
-   void *retVal=aligned_alloc(getpagesize(), allocSize);
+   void    *retVal=aligned_alloc(pageSize, allocSize);
 
    memmove(retVal, codeBase, codeLen);
 
    mprotect(retVal, allocSize, PROT_EXEC);
 
-   return retVal;
+   return new RMLDynamicFuncDesc((RMLDynamicFunc *)retVal, allocSize);
 }
 
 #define _USE_ENTERLEAVE
@@ -251,7 +249,10 @@ void X64CodeBag::emitCall(void *callAddr)
 void X64CodeBag::emitExceptionChecker()
 {
    setupImmediateIntegralPara(0, (uint64_t)rmlEval);
+#if defined(DO_X64)
    emitCall((void *)RMLEval::checkexception);
+#endif
+
    // or rax, rax
    emitBytes(3, 0x48, 0x09, 0xC0);
    // 0F 85 cd is JNE with 32 bit cd offset

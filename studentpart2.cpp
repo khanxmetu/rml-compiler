@@ -20,9 +20,6 @@ void RMLIC::writeAsJSON(ostream *outStream) {
 RMLDynamicFunc* RMLEval::generateCode() {
 }
 
-bool RMLEval::nodeDiscardable(RMLEvalExpNode *node) {
-}
-
 void RMLEval::scanConstantFolding() {
 }
 

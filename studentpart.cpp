@@ -242,6 +242,8 @@ void RMLEval::populateSelectNodeSymbols(RMLSelectNode *node, RMLEvalSpaceNode *s
 
       if (symbolColumn==nullptr)
          messageSet.appendMessage(node->lineNumber, "Cannot append symbol "+*columnName+", which is possibly a duplicate.", RMLEvalMsgSeverity::Error);
+
+      delete columnSpec;
    }
 }
 
@@ -551,30 +553,6 @@ void RMLEval::scanCalculateTypes(RMLEvalExpNode *node)
                messageSet.appendMessage(node->lineNumber, "Unresolved symbol <"+node->symRefString()+">.", RMLEvalMsgSeverity::Error);
          }
          break;
-         /*
-      case LRT:
-         {
-            //node->type.type=RMLEvalType::RMLArray;
-            vector<RMLEvalExpNode *>   *v=expressionPartVector(left);
-            int cnt=v->size();
-            RMLEvalExpNode *firstNode=(*v)[0];
-
-            node->type=firstNode->type;
-
-            for (int i=1;i<cnt;i++)
-               if (firstNode->type!=(*v)[i]->type)
-               {
-                  messageSet.appendMessage((*v)[i]->lineNumber, "Array literal member must of the same type.", RMLEvalMsgSeverity::Error);
-                  ec++;
-                  break;
-               }
-            if (ec==0)
-               node->pVector=v;
-            else
-               delete v;
-         }
-         break;
-         */
       case OP_SELECT:
 #if defined(PROJECT04)
          if (scopingSelectNode->selectStatRuntimeIndex==-1)
@@ -589,6 +567,11 @@ void RMLEval::scanCalculateTypes(RMLEvalExpNode *node)
 
          if (node->right->type!=RMLEvalType::RMLBoolean)
             messageSet.appendMessage(node->lineNumber, "Where condition expression must evaluate a boolean.", RMLEvalMsgSeverity::Error);
+
+#if defined(PROJECT03)
+         if (node->right->opCode==OP_COMMA)
+            messageSet.appendMessage(node->lineNumber, "Where condition cannot have comma operator at root level.", RMLEvalMsgSeverity::Error);
+#endif
          break;
    }
 
@@ -617,25 +600,45 @@ void RMLEval::scanCalculateTypes(RMLEvalExpNode *node)
          RMLColumnDef *def=columnList->getColumnAt(i);
          scanCalculateTypes(def->rootNode);
 
-         if (backPatchTypes)
-         {
-            RMLSymbolColumn *symbolColumn=parentSymbolTable->findSymbol(symSpace, def->columnAlias);
-            if (symbolColumn!=nullptr)
-               symbolColumn->type=def->rootNode->type;
-         }
-
          RMLEvalExpNode *testNode=def->rootNode;
 
          while (testNode->opCode==OP_COMMA)
             testNode=testNode->left;
 
-         RMLFuncDesc  *func=RMLEval::lib+testNode->left->idNdx;
-         if (testNode->opCode==OP_CALL && func->isAggregate)
+         if (testNode->opCode==OP_CALL)
          {
+            RMLFuncDesc  *func=RMLEval::lib+testNode->left->idNdx;
+            if (func->isAggregate)
+            {
+   #if defined(PROJECT04)
+               scopingSelectNode->aggregators.push_back(RMLEvalAggregator(testNode->left->idNdx, this, testNode));
+   #endif
+               aggregateCount++;
+            }
+         }
+
 #if defined(PROJECT04)
-            scopingSelectNode->aggregators.push_back(RMLEvalAggregator(testNode->left->idNdx, this));
+         if (cc>1 && def->rootNode->type!=RMLEvalType::RMLString)
+         {
+            //  Inject implicit cast operator to force string conversion
+            RMLEvalExpNode *node=def->rootNode,
+                           *typeCastNode=new RMLEvalExpNode(node->lineNumber, node->left, LRT, nullptr);
+
+            typeCastNode->left=node;
+            typeCastNode->left->parent=typeCastNode;
+
+            typeCastNode->idNdx=LRT_NUMBERTOSTR;
+            typeCastNode->type=RMLEvalType::RMLString;
+
+            def->rootNode=typeCastNode;
+
+         }
 #endif
-            aggregateCount++;
+         if (backPatchTypes)
+         {
+            RMLSymbolColumn *symbolColumn=parentSymbolTable->findSymbol(symSpace, def->columnAlias);
+            if (symbolColumn!=nullptr)
+               symbolColumn->type=def->rootNode->type;
          }
       }
 

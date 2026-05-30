@@ -1,0 +1,36 @@
+﻿cousename,name,sex,grade
+Music,Isaac Newton,Male,65
+Physics,Isaac Newton,Male,65
+Calculus,Isaac Newton,Male,65
+Human Rights,Isaac Newton,Male,65
+Literature,Isaac Newton,Male,65
+Arts,Isaac Newton,Male,65
+Biology,Isaac Newton,Male,65
+Music,Simone de Beauvoir,Female,70
+Physics,Simone de Beauvoir,Female,70
+Calculus,Simone de Beauvoir,Female,70
+Human Rights,Simone de Beauvoir,Female,70
+Literature,Simone de Beauvoir,Female,70
+Arts,Simone de Beauvoir,Female,70
+Biology,Simone de Beauvoir,Female,70
+Music,Federico Garcia Lorca,Male,55
+Physics,Federico Garcia Lorca,Male,55
+Calculus,Federico Garcia Lorca,Male,55
+Human Rights,Federico Garcia Lorca,Male,55
+Literature,Federico Garcia Lorca,Male,55
+Arts,Federico Garcia Lorca,Male,55
+Biology,Federico Garcia Lorca,Male,55
+Music,William Shakespeare,Male,55
+Physics,William Shakespeare,Male,55
+Calculus,William Shakespeare,Male,55
+Human Rights,William Shakespeare,Male,55
+Literature,William Shakespeare,Male,55
+Arts,William Shakespeare,Male,55
+Biology,William Shakespeare,Male,55
+Music,Simone de Beauvoir,Female,75
+Physics,Simone de Beauvoir,Female,75
+Calculus,Simone de Beauvoir,Female,75
+Human Rights,Simone de Beauvoir,Female,75
+Literature,Simone de Beauvoir,Female,75
+Arts,Simone de Beauvoir,Female,75
+Biology,Simone de Beauvoir,Female,75

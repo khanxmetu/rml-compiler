@@ -54,7 +54,8 @@ class X64CodeBag
 
       template <typename t> void emitCodeFrag(t codeFrag);
       void emitBytes(int len, ...);
-      void *createCodeBase();
+
+      RMLDynamicFuncDesc* createCodeBase();
 
       void emitPrologue(int varCount);
       void emitEpilogue();

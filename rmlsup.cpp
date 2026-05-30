@@ -279,6 +279,8 @@ const char *RMLSelectNode::getNodeTypeStr()
 
 RMLSelectNode::~RMLSelectNode()
 {
+   if (columnList!=nullptr)
+      delete columnList;
 }
 
 RMLEvalSpaceNode::RMLEvalSpaceNode(int pLineNumber, string *pExternalSpaceName, RMLEvalExpNode *alias)
@@ -329,6 +331,16 @@ RMLEvalExternalSpaceNode::RMLEvalExternalSpaceNode(int pLineNumber, string *pExt
    string fileName=(*pExternalSpaceName)+".csv";
 
    csv=new CSVProxy(&fileName);
+}
+
+RMLEvalExternalSpaceNode::~RMLEvalExternalSpaceNode()
+{
+   delete csv;
+
+   // This ascendant does not delete this value!
+   // So, delete it!
+   if (stringValue!=nullptr)
+      delete stringValue;
 }
 
 int RMLEvalExternalSpaceNode::columnCount()
@@ -388,12 +400,16 @@ int RMLEvalCalculatedSpaceNode::columnCount()
 RMLColumnSpec *RMLEvalCalculatedSpaceNode::columnAt(int ndx)
 {
    RMLSelectNode *spaceNode=(RMLSelectNode *)left;
-   RMLColumnSpec *columnSpec=spaceNode->columnAt(ndx);
+   RMLColumnSpec *cs=spaceNode->columnAt(ndx),
+                 *r=nullptr;
 
-   if (columnSpec!=nullptr)
-      return new RMLColumnSpec(columnSpec->name, columnSpec->type, ndx);
+   if (cs!=nullptr)
+   {
+      r=new RMLColumnSpec(cs->name, cs->type, ndx);
+      delete cs;
+   }
 
-   return nullptr;
+   return r;
 }
 
 RMLColumnSpec *RMLEvalCalculatedSpaceNode::findColumn(string *fieldId)
@@ -470,11 +486,14 @@ RMLEvalExpNode::RMLEvalExpNode(int pLineNumber, RMLEvalExpNode *rowSetRoot)
 
 RMLEvalExpNode::~RMLEvalExpNode()
 {
-   if (opCode==CONST)
-   {
-      if (type==RMLEvalType::RMLString)
-         delete stringValue;
-   }
+   if (((opCode==CONST && type==RMLEvalType::RMLString)
+        || opCode==SYMREF
+        || opCode==INSFREF
+        || opCode==INSID
+        || opCode==INSMEM
+        || (opCode==LRT && idNdx==LRT_ALLOCATESTRING))
+       && stringValue!=nullptr)
+      delete stringValue;
 
    if (pVector!=nullptr)
       delete pVector;
@@ -525,11 +544,18 @@ RMLEvalExpNode::RMLEvalExpNode(int pLineNumber, RMLEvalExpNode *pLeft, int pOpCo
 
 RMLEval::~RMLEval()
 {
+#if defined(DO_X64)
    if (exceptionWord!=nullptr)
       delete exceptionWord;
+#endif
 
    if (ic!=nullptr)
       delete ic;
+}
+
+bool RMLEval::nodeDiscardable(RMLEvalExpNode *node)
+{
+   return node->forceActiveCount==0 && node->selectCount==0;
 }
 
 void RMLEval::writeStrValue(ostream *os, string *strValue)
@@ -654,11 +680,12 @@ RMLSymbolSpace::RMLSymbolSpace(string *pSpaceName, string *pAlias, int pSpaceInd
 
 RMLSymbolSpace::~RMLSymbolSpace()
 {
+   /*
    if (spaceName!=nullptr)
       delete spaceName;
 
    if (alias!=nullptr)
-      delete alias;
+      delete alias;*/
 }
 
 RMLSymbolColumn::RMLSymbolColumn(RMLSymbolSpace *pSpace, string *pName, RMLEvalType pType)
@@ -675,7 +702,7 @@ RMLSymbolColumn::~RMLSymbolColumn()
       delete space;
    */
 
-   delete name;
+   //delete name;
 }
 
 string RMLSymbolColumn::fqn()
@@ -1101,6 +1128,8 @@ void RMLCodePathWindow::build(RMLIC *ic, int codeLocationIndex, int windowSize, 
 
       path.push_back(p);
    }
+
+   delete t;
 }
 
 RMLIC::RMLIC()
@@ -1296,11 +1325,13 @@ void RMLEval::transformStrConstToLRT(RMLEvalExpNode *node)
    }
 }
 
-uint64_t RMLEval::resetScanner(RMLEval *rmlEval, int64_t selectId)
+uint64_t RMLEval::readLine(RMLEval *rmlEval, RMLSpaceRuntime *srt)
 {
-   RMLSpaceRuntime  *srt=&rmlEval->ss[selectId];
-   CSVProxy *csv=srt->startCSVProxy();
+   CSVProxy *csv=srt->cp;
    CSVLine  *line=csv->fetchLine(true);
+
+   if (srt->latestLine!=nullptr)
+      delete srt->latestLine;
 
    if (line!=nullptr)
    {
@@ -1315,31 +1346,24 @@ uint64_t RMLEval::resetScanner(RMLEval *rmlEval, int64_t selectId)
          p--;
       }
    }
+   srt->latestLine=line;
 
    return line!=nullptr;
+}
+
+uint64_t RMLEval::resetScanner(RMLEval *rmlEval, int64_t selectId)
+{
+   RMLSpaceRuntime  *srt=&rmlEval->ss[selectId];
+   srt->startCSVProxy();
+
+   return readLine(rmlEval, srt);
 }
 
 uint64_t RMLEval::advanceScanner(RMLEval *rmlEval, int64_t selectId)
 {
    RMLSpaceRuntime  *srt=&rmlEval->ss[selectId];
-   CSVProxy         *csv=srt->cp;
-   CSVLine          *line=csv->fetchLine(true);
 
-   if (line!=nullptr)
-   {
-      uint64_t   *p=rmlEval->wordBook-srt->spaceNode->varOffset;
-      int         cc=csv->columnCount();
-
-      for (int i=0;i<cc;i++)
-      {
-         string *t=line->getColumn(i);
-
-         *((string **)p)=t;
-         p--;
-      }
-   }
-
-   return line!=nullptr;
+   return readLine(rmlEval, srt);
 }
 
 int64_t RMLEval::aggregate(RMLEval *rmlEval, uint64_t selectId, uint64_t *values)
@@ -1397,7 +1421,7 @@ int64_t RMLEval::snapshot(RMLEval *rmlEval, uint64_t selectId, uint64_t *values)
       switch (colSpec->type)
       {
          case RMLEvalType::RMLNumber:
-            *os<<*(double *)*values;
+            *os<<*(double *)values;
             break;
          case RMLEvalType::RMLString:
             *os<<*(string *)*values;
@@ -1430,6 +1454,15 @@ void RMLEval::createResultSet(RMLEval *rmlEval, uint64_t selectId)
 
    *os << "\xef\xbb\xbf" << *colDef->columnAlias;
 
+   if (srt->selectStat!=nullptr)
+   {
+      vector<RMLEvalAggregator>
+                       *aggregators=&srt->selectStat->aggregators;
+      int               agc=aggregators->size();
+      for (int i=0;i<agc;i++)
+         (*aggregators)[i].reset();
+   }
+
    for (int i=1;i<cc;i++)
    {
       colDef=columnList->getColumnAt(i);
@@ -1460,12 +1493,14 @@ uint64_t RMLEval::finalizeResultSet(RMLEval *rmlEval, uint64_t selectId)
    }
 
    srt->os->close();
+   delete srt->os;
 
    if (selectStat->simpleValueEvaluator)
    {
       int         row=0;
       CSVProxy   *cp=srt->startCSVProxy();
-      CSVLine    *line;
+      CSVLine    *line,
+                 *vLine=nullptr;
       string     *v=nullptr;
       double      d;
 
@@ -1473,9 +1508,12 @@ uint64_t RMLEval::finalizeResultSet(RMLEval *rmlEval, uint64_t selectId)
       {
          if (row==0)
          {
+            vLine=line;
             v=line->getColumn(0);
             retVal=(uint64_t)v;
          }
+         else
+            delete line;
          row++;
       }
 
@@ -1498,7 +1536,10 @@ uint64_t RMLEval::finalizeResultSet(RMLEval *rmlEval, uint64_t selectId)
       else
          rmlEval->setExceptionWord(new string(RML_EXCEPTION_QRCN1));
 
-      delete cp;
+      if (vLine!=nullptr)
+         delete vLine;
+
+      //delete cp;
    }
 
    return retVal;
@@ -1598,6 +1639,15 @@ RMLSpaceRuntime::RMLSpaceRuntime(RMLSelectNode *pSelectStat)
    spaceNode=nullptr;
 }
 
+RMLSpaceRuntime::~RMLSpaceRuntime()
+{
+   if ((selectStat!=nullptr || !spaceNode->isExternal) && cp!=nullptr)
+      delete cp;
+
+   if (latestLine!=nullptr)
+      delete latestLine;
+}
+
 string RMLSpaceRuntime::getFileName()
 {
    if (selectStat!=nullptr)
@@ -1614,6 +1664,10 @@ CSVProxy *RMLSpaceRuntime::startCSVProxy()
    if (selectStat!=nullptr || !spaceNode->isExternal)
    {
       string fileName=getFileName();
+
+      if (cp!=nullptr)
+         delete cp;
+
       cp=new CSVProxy(&fileName);
    }
    else
@@ -1632,10 +1686,20 @@ RMLSelectNode *RMLSpaceRuntime::getSelectStat()
    return (RMLSelectNode *)spaceNode->left;
 }
 
-RMLEvalAggregator::RMLEvalAggregator(int pAggregateId, RMLEval *pRmlEval)
+RMLEvalAggregator::RMLEvalAggregator(int pAggregateId, RMLEval *pRmlEval, RMLEvalExpNode *pAggregatingNode)
 {
    aggregateId=pAggregateId;
    rmlEval=pRmlEval;
+   aggregatingNode=pAggregatingNode;
+}
+
+void RMLEvalAggregator::reset()
+{
+   max=
+   min=
+   sx=
+   sx2=
+   count=0;
 }
 
 void RMLEval::setExceptionWord(string *pew)
@@ -1686,5 +1750,24 @@ double RMLEvalAggregator::calculate()
    }
    return retVal;
 }
+
+#if defined(DO_X64)
+
+RMLDynamicFuncDesc::RMLDynamicFuncDesc(RMLDynamicFunc *pf, int pCodeAllocationSize)
+{
+   f=pf;
+   codeAllocationSize=pCodeAllocationSize;
+}
+
+RMLDynamicFuncDesc::~RMLDynamicFuncDesc()
+{
+   if (f!=nullptr)
+   {
+      mprotect((void *)f, 4096, PROT_READ | PROT_WRITE);
+      free((void *)f);
+   }
+}
+
+#endif
 
 #endif

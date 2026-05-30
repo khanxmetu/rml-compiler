@@ -126,14 +126,20 @@ int main(int argc, char **argv)
 #ifdef DO_X64
             if (processed && rmlEval->messageSet.messageCount(RMLEvalMsgSeverity::Error)==0)
             {
-               RMLDynamicFunc *f=rmlEval->generateCode();
-               if (f!=nullptr)
-                  f();
-               cout << "Function: " << (int *)f << endl;
+               RMLDynamicFuncDesc *fd=rmlEval->generateCode();
+               if (fd!=nullptr)
+               {
+                  if (fd->f!=nullptr)
+                     fd->f();
+
+                  cout << "Function: " << (int *)fd->f << endl;
+                  delete fd;
+               }
             }
-#endif
+
             if (rmlEval->exceptionWord!=nullptr)
                cout << "RML exception " << *rmlEval->exceptionWord << endl;
+#endif
             delete rmlEval;
             delete driver;
          }
@@ -142,7 +148,7 @@ int main(int argc, char **argv)
       }
    }
    else
-      cout << "Usage is "<<argv[0]<<" <optional optimization parameter> <dgeval module file name>";
+      cout << "Usage is "<<argv[0]<<" <optional optimization parameter> <rml module file name>";
 
    return 0;
 }

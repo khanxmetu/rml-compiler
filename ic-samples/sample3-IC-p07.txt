@@ -1,0 +1,55 @@
+00000 lrt       4 type:[none]  ; LRT_SETWORDBASE
+00001 lrt       5 type:[none] 0 ; LRT_CREATERESULTSET
+00002 lrt       5 type:[none] 1 ; LRT_CREATERESULTSET
+00003 lrt       0 type:[none] 2 ; LRT_RESETSCANNER
+00004 jf       38 type:[none] 
+00005 lrt       5 type:[none] 5 ; LRT_CREATERESULTSET
+00006 lrt       0 type:[none] 3 ; LRT_RESETSCANNER
+00007 jf       16 type:[none] 
+00008 symref    5 type:[none] 
+00009 symref    2 type:[none] 
+00010 lrt       8 type:[boolean] 0 ; LRT_STRCMP
+00011 jf       14 type:[none] 
+00012 const     0 type:[number] 1
+00013 lrt       2 type:[none] 5 ; LRT_AGGREGATE
+00014 lrt       1 type:[none] 3 ; LRT_ADVANCESCANNER
+00015 jt        8 type:[none] 
+00016 lrt       6 type:[none] 5 ; LRT_FINALIZERESULTSET
+00017 const     0 type:[number] 0
+00018 gt        0 type:[number] 
+00019 jf       36 type:[none] 
+00020 symref    2 type:[none] 
+00021 lrt       5 type:[none] 7 ; LRT_CREATERESULTSET
+00022 lrt       0 type:[none] 4 ; LRT_RESETSCANNER
+00023 jf       33 type:[none] 
+00024 symref    5 type:[none] 
+00025 symref    2 type:[none] 
+00026 lrt       8 type:[boolean] 0 ; LRT_STRCMP
+00027 jf       31 type:[none] 
+00028 symref    6 type:[none] 
+00029 call      1 type:[number] "number" @15
+00030 lrt       2 type:[none] 7 ; LRT_AGGREGATE
+00031 lrt       1 type:[none] 4 ; LRT_ADVANCESCANNER
+00032 jt       24 type:[none] 
+00033 lrt       6 type:[none] 7 ; LRT_FINALIZERESULTSET
+00034 lrt       7 type:[string]  ; LRT_NUMBERTOSTR
+00035 lrt       3 type:[none] 1 ; LRT_SNAPSHOT
+00036 lrt       1 type:[none] 2 ; LRT_ADVANCESCANNER
+00037 jt        5 type:[none] 
+00038 lrt       6 type:[none] 1 ; LRT_FINALIZERESULTSET
+00039 pop       1 type:[none] 
+00040 lrt       0 type:[none] 1 ; LRT_RESETSCANNER
+00041 jf       52 type:[none] 
+00042 symref    1 type:[none] 
+00043 call      1 type:[number] "number" @15
+00044 const     0 type:[number] 85
+00045 lt        0 type:[number] 
+00046 jf       50 type:[none] 
+00047 symref    0 type:[none] 
+00048 symref    1 type:[none] 
+00049 lrt       3 type:[none] 0 ; LRT_SNAPSHOT
+00050 lrt       1 type:[none] 1 ; LRT_ADVANCESCANNER
+00051 jt       42 type:[none] 
+00052 lrt       6 type:[none] 0 ; LRT_FINALIZERESULTSET
+00053 pop       1 type:[none] 
+00054 lrt      11 type:[none]  ; LRT_POSTEXECUTECLEANUP

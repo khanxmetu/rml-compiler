@@ -1,0 +1,41 @@
+00000 lrt       4 type:[none]  ; LRT_SETWORDBASE
+00001 lrt       5 type:[none] 0 ; LRT_CREATERESULTSET
+00002 lrt       0 type:[none] 1 ; LRT_RESETSCANNER
+00003 jf       38 type:[none] 
+00004 lrt       0 type:[none] 2 ; LRT_RESETSCANNER
+00005 jf       38 type:[none] 
+00006 lrt       0 type:[none] 3 ; LRT_RESETSCANNER
+00007 jf       38 type:[none] 
+00008 symref    3 type:[none] 
+00009 symref    0 type:[none] 
+00010 lrt       8 type:[boolean] 0 ; LRT_STRCMP
+00011 symref    2 type:[none] 
+00012 call      1 type:[number] "number" @15
+00013 const     0 type:[number] 85
+00014 lt        0 type:[number] 
+00015 band      0 type:[boolean] 
+00016 jf       32 type:[none] 
+00017 symref    8 type:[none] 
+00018 symref    4 type:[none] 
+00019 lrt      10 type:[string] " " ; LRT_ALLOCATESTRING
+00020 lrt       9 type:[string]  ; LRT_CATSTRING
+00021 symref    5 type:[none] 
+00022 lrt       9 type:[string]  ; LRT_CATSTRING
+00023 symref    6 type:[none] 
+00024 lrt      10 type:[string] "F" ; LRT_ALLOCATESTRING
+00025 lrt       8 type:[boolean] 0 ; LRT_STRCMP
+00026 jf       29 type:[string] 
+00027 lrt      10 type:[string] "Female" ; LRT_ALLOCATESTRING
+00028 jmp      30 type:[string] 
+00029 lrt      10 type:[string] "Male" ; LRT_ALLOCATESTRING
+00030 symref    2 type:[none] 
+00031 lrt       3 type:[none] 0 ; LRT_SNAPSHOT
+00032 lrt       1 type:[none] 3 ; LRT_ADVANCESCANNER
+00033 jt        8 type:[none] 
+00034 lrt       1 type:[none] 2 ; LRT_ADVANCESCANNER
+00035 jt        6 type:[none] 
+00036 lrt       1 type:[none] 1 ; LRT_ADVANCESCANNER
+00037 jt        4 type:[none] 
+00038 lrt       6 type:[none] 0 ; LRT_FINALIZERESULTSET
+00039 pop       1 type:[none] 
+00040 lrt      11 type:[none]  ; LRT_POSTEXECUTECLEANUP

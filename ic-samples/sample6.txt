@@ -1,0 +1,2 @@
+select C.cid as cid, C.coursename as coursename from courses C
+   where (select count() as cnt from grades G where G.cid==C.cid)==0;
