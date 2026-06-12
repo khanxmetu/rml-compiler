@@ -61,3 +61,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/sample0.txt
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/sample1.txt
         ${CMAKE_CURRENT_BINARY_DIR}/sample1.txt
         COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/sample2.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/sample2.txt
+        COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/sample3.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/sample3.txt
+        COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/sample4.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/sample4.txt
+        COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/sample5.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/sample5.txt
+        COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/sample6.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/sample6.txt
+        COPYONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/ic-samples/mysample.txt
+        ${CMAKE_CURRENT_BINARY_DIR}/mysample.txt
+        COPYONLY)

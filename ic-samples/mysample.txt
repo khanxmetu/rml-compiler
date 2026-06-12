@@ -1,0 +1,6 @@
+select C.coursename as cousename,
+       B.firstname + " "+B.lastname as name,
+       B.sex=="F"?"Female":"Male" as sex,
+       A.grade as grade
+   from grades A, students B, courses C
+   where B.sid==A.sid && number(A.grade)<85;

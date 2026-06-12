@@ -1763,7 +1763,7 @@ RMLDynamicFuncDesc::~RMLDynamicFuncDesc()
 {
    if (f!=nullptr)
    {
-      mprotect((void *)f, 4096, PROT_READ | PROT_WRITE);
+      mprotect((void *)f, codeAllocationSize, PROT_READ | PROT_WRITE);
       free((void *)f);
    }
 }
