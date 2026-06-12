@@ -14,6 +14,14 @@ using namespace std;
 
 // RMLIC definitions
 void RMLIC::writeAsJSON(ostream *outStream) {
+    *outStream<<"[";
+    for (int i=0; i<code.size(); i++) {
+        code[i].inst.writeAsJSON(outStream);
+        if (i!=code.size()-1) {
+            *outStream<<", ";
+        }
+    }
+    *outStream<<"]";
 }
 
 // RMLEval definitions
@@ -27,7 +35,7 @@ void RMLEval::scanConstantFolding() {
     }
 }
 
-void constFoldApplyOp(RMLEvalExpNode* left, RMLEvalExpNode* right, RMLEvalExpNode* node) {
+void constFoldApplyOp(RMLEvalExpNode* left, RMLEvalExpNode* right, RMLEvalExpNode* node, RMLMsgSet& messageSet) {
     switch (node->opCode) {
     case OP_COMMA:
         break;
@@ -115,7 +123,8 @@ void constFoldApplyOp(RMLEvalExpNode* left, RMLEvalExpNode* right, RMLEvalExpNod
     case OP_DIV:
         node->opCode = CONST;
         if (right->doubleValue == 0) {
-            // TODO Division by 0 error
+            node->doubleValue = 3;
+            messageSet.appendMessage(node->lineNumber, "Division by zero is not allowed", RMLEvalMsgSeverity::Error);
         }else {
             node->doubleValue = left->doubleValue / right->doubleValue;
         }
@@ -146,7 +155,7 @@ void constFoldApplyOp(RMLEvalExpNode* left, RMLEvalExpNode* right, RMLEvalExpNod
     }
 }
 
-void constFoldApplyIdentity(RMLEvalExpNode* konst, RMLEvalExpNode* other, RMLEvalExpNode* node, RMLEvalExpNode **rootPointerWord) {
+void constFoldApplyIdentity(RMLEvalExpNode* konst, RMLEvalExpNode* other, RMLEvalExpNode* node, RMLEvalExpNode **rootPointerWord, RMLMsgSet& messageSet) {
     RMLEvalExpNode* escalatedNode = nullptr;
     switch (node->opCode) {
     case OP_ADD:
@@ -193,7 +202,8 @@ void constFoldApplyIdentity(RMLEvalExpNode* konst, RMLEvalExpNode* other, RMLEva
             if (konst == node->left) {
                 escalatedNode = konst;
             }else {
-                // TODO Division by zero error
+                node->doubleValue = 3;
+                messageSet.appendMessage(node->lineNumber, "Division by zero is not allowed", RMLEvalMsgSeverity::Error);
             }
         }else if (konst->doubleValue == 1 && konst == node->right) {
             escalatedNode = other;
@@ -298,14 +308,14 @@ void RMLEval::scanConstantFolding(RMLEvalExpNode *node) {
 
     // all params const
     if (left!=nullptr && left->opCode == CONST && (right==nullptr ||  right->opCode == CONST)) {
-        constFoldApplyOp(left, right, node);
+        constFoldApplyOp(left, right, node, messageSet);
     }
     // both params exist and at least one is non-const
     else if (left!=nullptr && right!=nullptr) {
         if (left->opCode == CONST) {
-            constFoldApplyIdentity(left, right, node, rootPointerWord);
+            constFoldApplyIdentity(left, right, node, rootPointerWord, messageSet);
         }else if (right->opCode == CONST) {
-            constFoldApplyIdentity(right, left, node, rootPointerWord);
+            constFoldApplyIdentity(right, left, node, rootPointerWord, messageSet);
         }
 
         // replace with lrt opcode for strings
@@ -657,4 +667,66 @@ string * RMLEval::left(RMLEval *rmlEval, string *str, double n) {
 
 // RMLICInst definitions
 void RMLICInst::writeAsJSON(ostream *outStream) {
+    *outStream <<"{"
+        << "\"mnemonic\":"; RMLEval::writeStrValue(outStream, &RMLEval::opStr[opCode]);
+    *outStream <<", " << "\"opCode\":" << opCode
+        <<", " << "\"p1\":" << p1
+        <<", " << "\"type\":" << static_cast<int>(type);
+
+    if (opCode==CONST)
+    {
+        *outStream <<", " << "\"value\":";
+        switch (type)
+        {
+            case RMLEvalType::RMLNumber:
+                (*outStream) << numConstant;
+                break;
+            case RMLEvalType::RMLBoolean:
+                (*outStream) << boolConstant;
+                break;
+            case RMLEvalType::RMLString:
+                RMLEval::writeStrValue(outStream, strConstant);
+                break;
+            default: ;
+        }
+    }
+
+    if (opCode==INSMEM)
+    {
+        if (strConstant!=nullptr) {
+            *outStream <<", " << "\"value\":";
+            RMLEval::writeStrValue(outStream, strConstant);
+        }
+    }
+
+    if (opCode==LRT)
+    {
+        *outStream <<", " << "\"value\":";
+        switch (p1)
+        {
+            case LRT_ALLOCATESTRING:
+                RMLEval::writeStrValue(outStream, strConstant);
+                break;
+            case LRT_RESETSCANNER:
+            case LRT_ADVANCESCANNER:
+            case LRT_AGGREGATE:
+            case LRT_SNAPSHOT:
+            case LRT_CREATERESULTSET:
+            case LRT_FINALIZERESULTSET:
+            case LRT_STRCMP:
+                (*outStream) << intConstant;
+                break;
+            default:
+                *outStream << 0; // or null
+
+        }
+
+    }
+
+    if (opCode==OP_CALL) {
+        *outStream <<", " << "\"name\":"; RMLEval::writeStrValue(outStream, &RMLEval::libFunctionAt((int)numConstant)->name);
+        *outStream <<", " << "\"id\":" << (int)numConstant;
+    }
+
+    *outStream << "}";
 }

@@ -600,6 +600,12 @@ void RMLEval::scanCalculateTypes(RMLEvalExpNode *node)
       {
          RMLColumnDef *def=columnList->getColumnAt(i);
          scanCalculateTypes(def->rootNode);
+         node->functionCallCount+=def->rootNode->functionCallCount;
+         node->nifc+=def->rootNode->nifc;
+         node->symRefCount+=def->rootNode->symRefCount;
+         node->selectCount+=def->rootNode->selectCount;
+         if (node->opCode!=OP_COMMA)
+            node->forceActiveCount+=def->rootNode->forceActiveCount;
 
          RMLEvalExpNode *testNode=def->rootNode;
 
@@ -615,6 +621,9 @@ void RMLEval::scanCalculateTypes(RMLEvalExpNode *node)
                scopingSelectNode->aggregators.push_back(RMLEvalAggregator(testNode->left->idNdx, this, testNode));
    #endif
                aggregateCount++;
+            }
+            if (func->paraCount == 0) {
+               testNode->right = new RMLEvalExpNode(testNode->lineNumber, 1.0, CONST);
             }
          }
 
@@ -698,8 +707,12 @@ void RMLEvalExpNode::writeAsJSON(ostream *os)
    (*os) <<"\"lineNumber\": "+to_string(lineNumber)+", \"nodeType\": \""+getNodeTypeStr()+"\", \"opCode\": "
          <<opCode<<", \"mnemonic\": \""<<RMLEval::opStr[opCode]
          <<"\", \"typeCode\": "<<((int)type)<<", \"type\": \""<<RMLEval::typeStr[(int)type] << "\""
-         <<", \"idNdx\": "<<idNdx;
-
+         <<", \"idNdx\": "<<idNdx
+         <<", \"functionCallCount\": " << functionCallCount
+         <<", \"nifc\": " << nifc
+         <<", \"symRefCount\": " << symRefCount
+         <<", \"selectCount\": " << selectCount
+         <<", \"forceActiveCount\": " << forceActiveCount;
    switch (opCode)
    {
       case CONST:
