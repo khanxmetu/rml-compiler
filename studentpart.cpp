@@ -495,6 +495,7 @@ void RMLEval::scanCalculateTypes(RMLEvalExpNode *node)
 #if defined(PROJECT04)
                if (!f->idempotent)
                   node->nifc++;
+               if (f->forceActive) node->forceActiveCount++;
 #endif
                if (f->isAggregate && node->parent!=nullptr)
                   messageSet.appendMessage(node->lineNumber,
