@@ -1,0 +1,16 @@
+{
+    "chat.disableAIFeatures": true,
+    "clangd.path": "/home/bs2022/e2650158/.vscode-server/data/User/globalStorage/llvm-vs-code-extensions.vscode-clangd/install/22.1.0/clangd_22.1.0/bin/clangd",
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": [
+        "--background-index",
+        "--clang-tidy",
+        "--header-insertion=iwyu",
+        "--completion-style=detailed",
+        "--function-arg-placeholders",
+        "--fallback-style=LLVM",
+        "-j=4",
+        "--compile-commands-dir=${workspaceFolder}/build",
+        "--query-driver=**/*g++*,**/*clang++*,**/*c++*" 
+    ]
+}
