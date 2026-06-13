@@ -9,6 +9,7 @@ using namespace std;
 #include "MyParser.h"
 #include "FlexLexer.h"
 #include "MyFlexLexer.h"
+#include <climits>
 
 // Parser actions
 
@@ -621,9 +622,9 @@ void RMLEval::scanCalculateTypes(RMLEvalExpNode *node)
                scopingSelectNode->aggregators.push_back(RMLEvalAggregator(testNode->left->idNdx, this, testNode));
    #endif
                aggregateCount++;
-            }
-            if (func->paraCount == 0) {
-               testNode->right = new RMLEvalExpNode(testNode->lineNumber, 1.0, CONST);
+               if (func->paraCount == 0) {
+                  testNode->right = new RMLEvalExpNode(testNode->lineNumber, 1.0, CONST);
+               }
             }
          }
 

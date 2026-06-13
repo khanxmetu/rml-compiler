@@ -7,6 +7,9 @@ using namespace std;
 #include <vector>
 #include <stdlib.h>
 #include "rmlsup.h"
+#include <algorithm>
+#include <cmath>
+#include <ctime>
 
 #include "rmlsyn.tab.hh"
 #include "MyParser.h"
@@ -151,7 +154,8 @@ void constFoldApplyOp(RMLEvalExpNode* left, RMLEvalExpNode* right, RMLEvalExpNod
     if (node->opCode == CONST) {
         node->left = nullptr;
         node->right = nullptr;
-        // TODO destroyExpTree
+        delete left;
+        delete right;
     }
 }
 
@@ -237,7 +241,7 @@ void constFoldApplyIdentity(RMLEvalExpNode* konst, RMLEvalExpNode* other, RMLEva
         // update parent link
         escalatedNode->parent = node->parent;
 
-        // TODO destroy other
+        delete (escalatedNode==konst ? other : konst);
     }
 }
 

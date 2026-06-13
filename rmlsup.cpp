@@ -7,6 +7,8 @@ using namespace std;
 #include <vector>
 #include <stdlib.h>
 #include "rmlsup.h"
+#include <algorithm>
+#include <cmath>
 
 #include "rmlsyn.tab.hh"
 #include "MyParser.h"
@@ -103,7 +105,7 @@ RMLFuncDesc RMLEval::lib[]=
    {"sum", (void *)RMLEval::sum, false, true, true, true, false, 1, {RMLEvalType::RMLNumber,RMLEvalType::RMLNumber}},
    {"sin", (void *)RMLEval::sin, false, false, false, true, false, 1, {RMLEvalType::RMLNumber,RMLEvalType::RMLNumber}},
    {"cos", (void *)RMLEval::cos, false, false, false, true, false, 1, {RMLEvalType::RMLNumber,RMLEvalType::RMLNumber}},
-   {"tan", (void *)&RMLEval::tan, false, false, true, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
+   {"tan", (void *)RMLEval::tan, false, false, true, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
    {"pi", (void *)RMLEval::pi, false, false, false, true, false, 0, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
    {"atan", (void *)RMLEval::atan, false, false, false, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
    {"asin", (void *)RMLEval::asin, false, false, false, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
