@@ -1,4 +1,5 @@
 
+#include <cstdio>
 using namespace std;
 
 #include <iostream>
@@ -129,8 +130,16 @@ int main(int argc, char **argv)
                RMLDynamicFuncDesc *fd=rmlEval->generateCode();
                if (fd!=nullptr)
                {
-                  if (fd->f!=nullptr)
+                  if (fd->f!=nullptr){
+                     // DEBUG
+                     // dumps dynamic function contents to file
+                     // objdump -D -b binary -mi386:x86-64 fdump.bin > fdump.txt
+                     // FILE* dump = fopen("fdump.bin", "wb");
+                     // fwrite((uint8_t*)fd->f, 1, fd->codeAllocationSize, dump);
+                     // fclose(dump);
+
                      fd->f();
+                  }
 
                   cout << "Function: " << (int *)fd->f << endl;
                   delete fd;

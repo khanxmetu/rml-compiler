@@ -105,7 +105,7 @@ RMLFuncDesc RMLEval::lib[]=
    {"sum", (void *)RMLEval::sum, false, true, true, true, false, 1, {RMLEvalType::RMLNumber,RMLEvalType::RMLNumber}},
    {"sin", (void *)RMLEval::sin, false, false, false, true, false, 1, {RMLEvalType::RMLNumber,RMLEvalType::RMLNumber}},
    {"cos", (void *)RMLEval::cos, false, false, false, true, false, 1, {RMLEvalType::RMLNumber,RMLEvalType::RMLNumber}},
-   {"tan", (void *)RMLEval::tan, false, false, true, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
+   {"tan", (void *)&RMLEval::tan, false, false, true, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
    {"pi", (void *)RMLEval::pi, false, false, false, true, false, 0, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
    {"atan", (void *)RMLEval::atan, false, false, false, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
    {"asin", (void *)RMLEval::asin, false, false, false, true, false, 1, {RMLEvalType::RMLNumber, RMLEvalType::RMLNumber}},
@@ -1429,7 +1429,7 @@ int64_t RMLEval::snapshot(RMLEval *rmlEval, uint64_t selectId, uint64_t *values)
             *os<<*(string *)*values;
             break;
          case RMLEvalType::RMLBoolean:
-            *os<<*(bool *)*values;
+            *os<<*(bool *)values;
             break;
       }
       delete colSpec;

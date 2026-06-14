@@ -1,4 +1,5 @@
 
+#include <exception>
 using namespace std;
 // #include <bits/stdc++.h>
 #include <fstream>
@@ -15,6 +16,173 @@ using namespace std;
 #include "MyParser.h"
 #include "FlexLexer.h"
 
+//X64CodeBag definitions
+void X64CodeBag::translateInstructionStudent(RMLICInst *inst){
+
+// Machine code disassembly via:
+// nasm -f elf64 scratch.asm -o scratch.o
+// objdump -D scratch.o 
+
+    int opCode = inst->opCode;
+    int p=inst->p1;
+    auto type = inst->type;
+
+    switch (opCode) {
+        case OP_BAND:
+        case OP_BOR:
+// pop rax
+// and qword [rsp], rax
+// or qword [rsp], rax
+//    0:   58                      pop    %rax
+//    1:   48 21 04 24             and    %rax,(%rsp)
+//    5:   48 09 04 24             or     %rax,(%rsp)
+            emitBytes(1, 0x58);
+            emitBytes(4, 0x48, (opCode==OP_BAND ? 0x21: 0x09), 0x04, 0x24);
+            break;
+        case OP_NOT:
+        // flip lsb only
+// xor qword [rsp], 1
+//    0:   48 83 34 24 01          xorq   $0x1,(%rsp)
+            emitBytes(5, 0x48, 0x83, 0x34, 0x24, 0x01);
+            break;
+// Comparison instructions
+//    0:   75 0a                   jne    c <l>
+//    2:   74 08                   je     c <l>
+//    4:   7d 06                   jge    c <l>
+//    6:   7f 04                   jg     c <l>
+//    8:   7e 02                   jle    c <l>
+//    a:   7c 00                   jl     c <l>
+// short jump codes for inverse of condition are expected in cb
+        case OP_EQ:
+            comparisonInstruction(type, 0x75);
+            break;
+        case OP_NEQ:
+            comparisonInstruction(type, 0x74);
+            break;
+        case OP_LT:
+            comparisonInstruction(type, 0x7d);
+            break;
+        case OP_LTE:
+            comparisonInstruction(type, 0x7f);
+            break;
+        case OP_GT:
+            comparisonInstruction(type, 0x7e);
+            break;
+        case OP_GTE:
+            comparisonInstruction(type, 0x7c);
+            break;
+// Arithmatic instructions
+//    0:   f2 0f 10 44 24 08       movsd  0x8(%rsp),%xmm0
+//    6:   f2 0f 58 04 24          addsd  (%rsp),%xmm0
+//    b:   48 83 c4 08             add    $0x8,%rsp
+//    f:   f2 0f 11 04 24          movsd  %xmm0,(%rsp)
+
+//   14:   f2 0f 59 04 24          mulsd  (%rsp),%xmm0
+//   19:   f2 0f 5e 04 24          divsd  (%rsp),%xmm0
+//   1e:   f2 0f 5c 04 24          subsd  (%rsp),%xmm0
+        case OP_ADD:
+        case OP_SUB:
+        case OP_MUL:
+        case OP_DIV:
+        {
+            uint8_t code = opCode==OP_ADD ? 0x58 :
+             opCode==OP_SUB ? 0x5c :
+             opCode==OP_MUL ? 0x59 :
+             0x5e;
+
+            emitBytes(20,
+                0xf2, 0x0f, 0x10, 0x44, 0x24, 0x08,
+                0xf2, 0x0f, code, 0x04, 0x24,
+                0x48, 0x83, 0xc4, 0x08,
+                0xf2, 0x0f, 0x11, 0x04, 0x24
+            );
+        }
+            break;
+        case OP_MINUS:
+//    0:   66 0f ef c0             pxor   %xmm0,%xmm0  sets xmm0=0 by xoring
+//    4:   f2 0f 5c 04 24          subsd  (%rsp),%xmm0
+//    9:   f2 0f 11 04 24          movsd  %xmm0,(%rsp)
+            emitBytes(14,
+                0x66, 0x0f, 0xef, 0xc0, 
+                0xf2, 0x0f, 0x5c, 0x04, 0x24,
+                0xf2, 0x0f, 0x11, 0x04, 0x24
+            );
+            break;
+        case JMP:
+        {
+            int32_t offset = rmlEval->ic->instructionAt(p)->codeOffset - (codeLen+5);
+            emitBytes(1, 0xe9); // jmp
+            emitCodeFrag(offset); // rel32 offset
+        }
+            break;
+
+        case JF:
+        {
+//   25:	58                   	pop    %rax
+//   26:	48 85 c0             	test   %rax,%rax
+//   29:	0f 84 fc ff ff ff    	je     2b <_other+0x6>
+            int32_t offset = rmlEval->ic->instructionAt(p)->codeOffset - (codeLen+10);
+            emitBytes(6,
+                0x58,
+                0x48, 0x85, 0xc0,
+                0x0f, 0x84
+            );
+            emitCodeFrag((int32_t)offset); // rel32 offset
+        }
+            break;
+
+        case JT:
+        {
+//   25:	58                   	pop    %rax
+//   26:	48 85 c0             	test   %rax,%rax
+//   29:	0f 85 fc ff ff ff    	jne    2b <_other+0x6>
+            int32_t offset = rmlEval->ic->instructionAt(p)->codeOffset - (codeLen+10);
+            emitBytes(6,
+                0x58,
+                0x48, 0x85, 0xc0,
+                0x0f, 0x85
+            );
+            emitCodeFrag((int32_t)offset); // rel32 offset
+        }
+            break;
+
+        case SYMREF:
+        {
+            // push value at address rbp - inst->p1 -1 onto stack
+
+//    0:   ff b5 34 12 34 12       push   0x12341234(%rbp)
+            int32_t offset = -(inst->p1+1)*8;
+            emitBytes(2, 0xff, 0xb5); emitCodeFrag(offset);
+        }
+            break;
+        case CONST:
+            if(type==RMLEvalType::RMLBoolean) {
+//    0:   6a 00                   push   $0x0
+                emitBytes(2, 0x6a, (inst->boolConstant ? 0x01 : 0x00));
+            }
+            else if(type==RMLEvalType::RMLNumber) {
+//    0:   48 b8 34 12 34 12 34    movabs $0x1234123412341234,%rax
+//    7:   12 34 12 
+//    a:   50                      push   %rax
+                emitBytes(2, 0x48, 0xb8); emitCodeFrag(inst->numConstant);
+                emitBytes(1, 0x50);
+            }
+            break;
+        case POP:
+        //   25:	58                   	pop    %rax
+            emitBytes(1, 0x58);
+            break;
+    }
+}
+
+void X64CodeBag::backpatchInstruction(RMLICInst *inst) {
+    if(inst->opCode == JF || inst->opCode == JT) {
+        *(int32_t *)(codeBase+inst->codeOffset+6)=codeLen-(inst->codeOffset+10);
+    }else if(inst->opCode == JMP) {
+        *(int32_t *)(codeBase+inst->codeOffset+1)=codeLen-(inst->codeOffset+5);
+    }
+}
+
 // RMLIC definitions
 void RMLIC::writeAsJSON(ostream *outStream) {
     *outStream<<"[";
@@ -29,7 +197,25 @@ void RMLIC::writeAsJSON(ostream *outStream) {
 
 // RMLEval definitions
 RMLDynamicFuncDesc* RMLEval::generateCode() {
+    std::srand(std::time(nullptr));
+    auto codeBag = X64CodeBag(this);
+    codeBag.emitPrologue(maxSymbolDepth);
 
+    ic->collectImmediateJumps();
+    for (int i=0; i<ic->code.size(); i++) {
+        auto &line = ic->code[i];
+        if(line.ij!=nullptr) {
+            for(auto ijIndex: *line.ij) {
+                if(ijIndex<i) // if it was forward jump, update jump offset
+                    codeBag.backpatchInstruction(ic->instructionAt(ijIndex));
+            }
+        }
+        codeBag.translateInstruction(&line.inst);
+        codeBag.translateInstructionStudent(&line.inst);
+    }
+    codeBag.emitEpilogue();
+    return codeBag.createCodeBase();
+    // return nullptr;
 }
 
 void RMLEval::scanConstantFolding() {
@@ -124,11 +310,11 @@ void constFoldApplyOp(RMLEvalExpNode* left, RMLEvalExpNode* right, RMLEvalExpNod
         node->doubleValue = left->doubleValue * right->doubleValue;
         break;
     case OP_DIV:
-        node->opCode = CONST;
         if (right->doubleValue == 0) {
             node->doubleValue = 3;
             messageSet.appendMessage(node->lineNumber, "Division by zero is not allowed", RMLEvalMsgSeverity::Error);
         }else {
+            node->opCode = CONST;
             node->doubleValue = left->doubleValue / right->doubleValue;
         }
         break;
@@ -182,7 +368,7 @@ void constFoldApplyIdentity(RMLEvalExpNode* konst, RMLEvalExpNode* other, RMLEva
                 node->right = nullptr;
                 node->opCode = OP_MINUS;
                 node->left = other;
-                // updatedNode = node;
+                delete konst;
             }
         }
         break;
@@ -518,9 +704,6 @@ void RMLEval::scanForIC(RMLEvalExpNode *node) {
         }
             break;
         case SYMREF:
-            // For the SYMREF node, symbol resolution must be performed. Result of the
-            // resolution must be factored in the newly emitted IC instruction having the
-            // node’s opCode.
             {
             RMLSymbolColumn *column=scopingSelectNode->symbolTable.resolveSymbol(node->stringValue!=nullptr?node->stringValue:nullptr, node->left!=nullptr?node->left->stringValue:nullptr);
             ic->emitIC(SYMREF, column->wordIndex);
@@ -529,7 +712,7 @@ void RMLEval::scanForIC(RMLEvalExpNode *node) {
         case LRT:
             {
             auto c = ic->emitIC(node->opCode, node->idNdx, node->type);
-            if (node->idNdx == LRT_STRCMP) c->numConstant=node->doubleValue;
+            if (node->idNdx == LRT_STRCMP) c->intConstant=node->doubleValue;
             else if (node->idNdx == LRT_ALLOCATESTRING) c->strConstant=node->stringValue;
             }
             break;
@@ -604,8 +787,15 @@ void RMLEval::peepholeIC() {
         }
     }
     ic->applyRemoval();
+    // clean incoming jumps so it can be recalculated
+    for(auto &line: ic->code)  {
+        delete line.ij;
+        line.ij=nullptr;
+    }
 }
 
+// TODO report exceptions for these
+// aggregates are handled via LRT_AGGREGATE call to RMLEvalAggregator::calculate()
 double RMLEval::stddev(int selectNdx, int columnNdx) {
 }
 
@@ -625,48 +815,83 @@ double RMLEval::sum(int selectNdx, int columnNdx) {
 }
 
 double RMLEval::sin(double number) {
+    return std::sin(number);
 }
 
 double RMLEval::cos(double number) {
+    return std::cos(number);
 }
 
 double RMLEval::tan(double number) {
+    return std::tan(number);
 }
-
 double RMLEval::pi() {
+    return 3.14159265358979323846264338327950288;
 }
 
 double RMLEval::atan(double number) {
+    return std::atan(number);
 }
 
 double RMLEval::asin(double number) {
+    return std::asin(number);
 }
 
 double RMLEval::acos(double number) {
+    return std::acos(number);
 }
 
 double RMLEval::exp(double number) {
+    return std::exp(number);
 }
 
 double RMLEval::ln(RMLEval *rmlEval, double number) {
+    if(number<=0) {
+        rmlEval->setExceptionWord(new string(RML_EXCEPTION_MATHARG));
+    }else {
+        return std::log(number);
+    }
 }
 
 double RMLEval::number(RMLEval *rmlEval, string *str) {
+    try{
+        return std::stod(*str);
+    } catch(std::exception& e) {
+        rmlEval->setExceptionWord(new string(RML_EXCEPTION_STR2NUM));
+    }
 }
 
 double RMLEval::random(double number) {
+    return (float)(rand()) / RAND_MAX * number;
 }
 
 double RMLEval::print(string *str) {
+    std::cout << str->c_str() << std::endl;
+    return 1;
 }
 
 double RMLEval::len(string *str) {
+    return str->size();
 }
 
 string * RMLEval::right(RMLEval *rmlEval, string *str, double n) {
+    if(n<0 || n>str->size()) {
+        rmlEval->setExceptionWord(new string(RML_EXCEPTION_MATHARG));
+        return nullptr;
+    }
+    string* result = new string(str->substr(str->size()-n, (int)n));
+    rmlEval->registerStringObject(result);
+    return result;
 }
 
 string * RMLEval::left(RMLEval *rmlEval, string *str, double n) {
+    if(n<0 || n>str->size()) {
+        rmlEval->setExceptionWord(new string(RML_EXCEPTION_MATHARG));
+        return nullptr;
+    }
+    string* result = new string(str->substr(0, (int)n));
+    rmlEval->registerStringObject(result);
+    return result;
 }
 
 // RMLICInst definitions

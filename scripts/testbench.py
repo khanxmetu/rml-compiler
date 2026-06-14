@@ -39,13 +39,17 @@ for sample in samples:
         if ic_file.exists():
             ic_file.rename(args.samples_out_dir / f"{sample_stem}-IC-p{opt:02}.txt")
 
-        result_file = args.samples_out_dir / f"{sample_stem}result.txt"
+        result_file = args.samples_out_dir / f"result0.txt"
         if result_file.exists():
             result_file.rename(args.samples_out_dir / f"{sample_stem}result-p{opt:02}.txt")
 
 # Cleanup .csv files from the output directory
 for csv_file in args.samples_out_dir.glob("*.csv"):
     csv_file.unlink()
+
+# Cleanup intermediate result files
+for file in args.samples_out_dir.glob("result*.txt"):
+    file.unlink()
 
 # Diff the directories
 subprocess.run([
