@@ -10,6 +10,8 @@ bison -d rmlsyn.y
 flex -+ rml.l
 g++ -std=c++11 -o project4 rmlmain.cpp rmlsup.cpp studentpart.cpp studentpart2.cpp csvlib.cpp x64codegen.cpp MyParser.cpp MyFlexLexer.cpp rmlsyn.tab.cc lex.yy.cc $INCLUDEFLAGS
 
+# copy samples and csv files
+
 # run
 ./project4 <optional optimization parameter> <rml module file name>
 ```
@@ -17,9 +19,11 @@ g++ -std=c++11 -o project4 rmlmain.cpp rmlsup.cpp studentpart.cpp studentpart2.c
 ## Code Generation
 - X64 code generation is implemented 
 - To inspect the dynamic function's memory, set a breakpoint at rmlmain.cpp:141 before execution. The variable `fd->f` points to the memory block of dynamically generated code.
-- Alternatively the binary code can be dumped to a file and disassembled as demonstrated in code comment
+- Alternatively the binary code can be dumped to a file and disassembled as demonstrated in code comment at rmlmain.cpp:134-139
 
 ### Miscellaneous
 There was a minor bug I encountered and fixed in rmlsup.cpp:
 - In `RMLEval::snapshot()` replaced:  
 `*os<<*(bool *)*values;` with: `*os<<*(bool *)values;`
+
+[//]: # (zip 2650158.zip rmlmain.* rmlsup.* studentpart* csvlib.* x64codegen.* MyParser.* MyFlexLexer.* README.md rml.l rmlsyn.y )

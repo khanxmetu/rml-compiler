@@ -794,26 +794,33 @@ void RMLEval::peepholeIC() {
     }
 }
 
-// TODO report exceptions for these
 // aggregates are handled via LRT_AGGREGATE call to RMLEvalAggregator::calculate()
+// the following aggregates are dummy functions that are never called
 double RMLEval::stddev(int selectNdx, int columnNdx) {
+    return -1;
 }
 
 double RMLEval::mean(int selectNdx, int columnNdx) {
+    return -1;
 }
 
 double RMLEval::count(int selectNdx, int columnNdx) {
+    return -1;
 }
 
 double RMLEval::min(int selectNdx, int columnNdx) {
+    return -1;
 }
 
 double RMLEval::max(int selectNdx, int columnNdx) {
+    return -1;
 }
 
 double RMLEval::sum(int selectNdx, int columnNdx) {
+    return -1;
 }
 
+// scalar functions
 double RMLEval::sin(double number) {
     return std::sin(number);
 }
@@ -848,6 +855,7 @@ double RMLEval::exp(double number) {
 double RMLEval::ln(RMLEval *rmlEval, double number) {
     if(number<=0) {
         rmlEval->setExceptionWord(new string(RML_EXCEPTION_MATHARG));
+        return -1;
     }else {
         return std::log(number);
     }
@@ -858,6 +866,7 @@ double RMLEval::number(RMLEval *rmlEval, string *str) {
         return std::stod(*str);
     } catch(std::exception& e) {
         rmlEval->setExceptionWord(new string(RML_EXCEPTION_STR2NUM));
+        return -1;
     }
 }
 
