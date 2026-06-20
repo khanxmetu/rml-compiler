@@ -28,14 +28,14 @@ ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 add_executable(driver
         rmlmain.cpp
         rmlsup.cpp
-        studentpart.cpp
         csvlib.cpp
         x64codegen.cpp
         MyParser.cpp
         MyFlexLexer.cpp
         ${BISON_MyParser_OUTPUTS}
         ${FLEX_MyScanner_OUTPUTS}
-        studentpart2.cpp
+        part1.cpp
+        part2.cpp
 )
 
 target_include_directories(driver PRIVATE
